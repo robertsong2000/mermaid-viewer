@@ -45,9 +45,7 @@ const compress = async (target: string): Promise<string> => {
 
     const blob = new Blob([target]);
     const stream = blob.stream();
-    const compressedStream = stream.pipeThrough(
-        new CompressionStream("deflate")
-    );
+    const compressedStream = stream.pipeThrough(new CompressionStream("deflate"));
     const buf = await new Response(compressedStream).arrayBuffer();
     const binaryString = arrayBufferToBinaryString(buf);
     const encodedByBase64 = btoa(binaryString);
@@ -65,12 +63,9 @@ const decompress = async (target: string): Promise<string> => {
     const decodedByBase64 = atob(target);
     const bytes = binaryStringToBytes(decodedByBase64);
     const stream = new Blob([bytes]).stream();
-    const decompressedStream = stream.pipeThrough(
-        new DecompressionStream("deflate")
-    );
+    const decompressedStream = stream.pipeThrough(new DecompressionStream("deflate"));
     return await new Response(decompressedStream).text();
 };
-
 
 export const urlStorage = {
     // use hash for avoiding URL is too long 414 Request-URI Too Large
@@ -118,6 +113,7 @@ export class MermaidController extends HTMLElement {
     #inputDialogOpen?: HTMLButtonElement;
     #inputDialogClose?: HTMLButtonElement;
     #inputDialogInput?: HTMLTextAreaElement;
+    #exportSVGButton?: HTMLButtonElement; // 添加导出按钮引用
     #sequence?: {
         currentSequenceNumber: number;
         abortController: AbortController;
@@ -139,9 +135,15 @@ export class MermaidController extends HTMLElement {
         this.#inputDialogClose = this.shadowRoot.querySelector("#inputDialogClose")!;
         this.#inputDialogOpen = this.shadowRoot.querySelector("#openDialog")!;
         this.#inputDialogInput = this.shadowRoot.querySelector("#inputDialogInput")!;
+        this.#exportSVGButton = this.shadowRoot.querySelector("#exportSVG")!;
+
         this.#inputDialogClose.addEventListener("click", () => {
             this.closeInputDialog();
         });
+
+        // 添加导出按钮事件监听
+        this.#exportSVGButton?.addEventListener("click", () => this.exportSVG());
+
         this.#sequence = {
             currentSequenceNumber: 0,
             abortController: new AbortController(),
@@ -220,6 +222,55 @@ export class MermaidController extends HTMLElement {
     ) => {
         this.addEventListener(eventName, listener as EventListener);
     };
+
+    // 添加导出 SVG 方法
+    exportSVG() {
+        console.log("Export SVG clicked");
+        const graphDiv = document.getElementById(this.getAttribute("target") ?? "graphDiv");
+        if (!graphDiv) {
+            console.error("Target element not found");
+            return;
+        }
+
+        const svgElement = graphDiv.querySelector("svg");
+        if (!svgElement) {
+            console.error("SVG element not found");
+            return;
+        }
+
+        try {
+            // 克隆 SVG 以避免修改原始元素
+            const clonedSvg = svgElement.cloneNode(true) as SVGElement;
+
+            // 确保 SVG 包含完整的样式
+            const styles = document.getElementsByTagName("style");
+            Array.from(styles).forEach((style) => {
+                if (style.textContent?.includes(".mermaid")) {
+                    const newStyle = document.createElement("style");
+                    newStyle.textContent = style.textContent;
+                    clonedSvg.insertBefore(newStyle, clonedSvg.firstChild);
+                }
+            });
+
+            // 创建 Blob
+            const svgData = new XMLSerializer().serializeToString(clonedSvg);
+            const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
+
+            // 创建下载链接
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "mermaid-diagram.svg";
+
+            // 触发下载
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error exporting SVG:", error);
+        }
+    }
 
     updateSequenceController() {
         const sequence = this.#sequence;
@@ -351,9 +402,9 @@ export class MermaidController extends HTMLElement {
         // graphDiv is not rendered yet loop until it is rendered
         let count = 0;
         const limit = 10;
-        console.log(document.querySelector(`#${this.getAttribute("target")} .sequenceNumber`))
+        console.log(document.querySelector(`#${this.getAttribute("target")} .sequenceNumber`));
         while (!document.querySelector(`#${this.getAttribute("target")} .sequenceNumber`)) {
-            console.log("qw")
+            console.log("qw");
             await new Promise<void>((resolve) => {
                 setTimeout(() => {
                     resolve();
@@ -424,8 +475,8 @@ export class MermaidController extends HTMLElement {
             // viewPort 1000 → padding: 500
             // y = -1/5x + 700
             // limit: 100 <= padding <= 600
-            const calcPaddingBlock = -1 / 5 * viewBoxSize.height + 700;
-            const calcPaddingInline = -1 / 5 * viewBoxSize.width + 700;
+            const calcPaddingBlock = (-1 / 5) * viewBoxSize.height + 700;
+            const calcPaddingInline = (-1 / 5) * viewBoxSize.width + 700;
             const rectanglePaddingBlock = Math.max(100, Math.min(600, calcPaddingBlock));
             const rectanglePaddingInline = Math.max(100, Math.min(600, calcPaddingInline));
             console.debug("Padding Calculation Results", {
@@ -434,7 +485,7 @@ export class MermaidController extends HTMLElement {
                 calcPaddingInline,
                 rectanglePaddingBlock,
                 rectanglePaddingInline
-            })
+            });
             // target.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" })
             // https://github.com/anvaka/panzoom/issues/219
             pan.smoothShowRectangle(
@@ -449,9 +500,9 @@ export class MermaidController extends HTMLElement {
                 (from, to) => {
                     const distance = Math.sqrt(
                         Math.pow(from.top - to.top, 2) +
-                        Math.pow(from.right - to.right, 2) +
-                        Math.pow(from.bottom - to.bottom, 2) +
-                        Math.pow(from.left - to.left, 2)
+                            Math.pow(from.right - to.right, 2) +
+                            Math.pow(from.bottom - to.bottom, 2) +
+                            Math.pow(from.left - to.left, 2)
                     );
                     const exp_diff = Math.exp(distance / 1000);
                     const sigmoid = (exp_diff * 1000) / (exp_diff + 1);
@@ -475,7 +526,7 @@ export class MermaidController extends HTMLElement {
                 const moveToNumber = Math.max(0, currentNumber + 1);
                 const currentSequenceElement = getSequenceElement(moveToNumber);
                 if (!currentSequenceElement) {
-                    this.#pan?.smoothShowRectangle
+                    this.#pan?.smoothShowRectangle;
                     return;
                 }
                 panElement(currentSequenceElement);
@@ -487,7 +538,7 @@ export class MermaidController extends HTMLElement {
                 if (moveToNumber === 0) {
                     // reset zoom
                     this.#pan?.smoothZoomAbs(0, 0, 1);
-                    this.updateSequenceNumber(0)
+                    this.updateSequenceNumber(0);
                     return;
                 }
                 const currentSequenceElement = getSequenceElement(moveToNumber);

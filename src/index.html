@@ -124,86 +124,31 @@
                     display: block;
                 }
 
-                .sequenceController {
-                    grid-column: label 3;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: end;
-                    margin: 0.5rem 0;
-                    position: relative;
-                }
-
-                .sequenceNumberBox {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                }
-
-                .sequenceNumberLabel {
-                    font-size: 1.5rem;
-                    display: block;
-                }
-
-                .sequenceStepper {
-                    margin-left: 0.8rem;
-                    margin-right: 0.8rem;
-                }
-
-                /* show min attr of stepper into left bottom of input */
-                .sequenceStepper::before {
-                    content: attr(min);
-                    position: relative;
-                    left: 0;
-                    bottom: 0;
-                    margin-left: -0.5rem;
-                }
-
-                .sequenceStepper::after {
-                    content: attr(max);
-                    position: relative;
-                    right: 0;
-                    top: 0;
-                    margin-right: -0.5rem;
-                }
-
-                .sequenceStepper {
-                    display: block;
-                }
-
-                /*  top-right config area*/
-                .editDialogBox {
-                    position: absolute;
-                    top: 0;
-                    right: 0;
-                }
-
-                .openDialog {
+                /* 添加导出按钮样式 */
+                .exportButton {
                     padding: 0.5rem 1rem;
                     font-size: 1rem;
                     border: none;
+                    background-color: #007bff;
                     color: white;
                     border-radius: 0.5rem;
                     cursor: pointer;
+                    margin-left: 1rem;
                 }
 
-                .openDialog:hover {
-                    box-shadow: 0 0 0 0.2rem var(--newmo-green-300);
+                .exportButton:hover {
+                    background-color: #0056b3;
                 }
 
-                .footer {
-                    margin-top: 1rem;
-                    font-size: 1rem;
-                    color: #666;
-                    bottom: 0;
-                    left: 0;
-                    width: 100%;
-                    display: block;
-                    padding: 0.5rem 1rem;
-                }
-
-                .footerText {
-                    text-align: right;
-                    padding-inline: 1rem;
+                /* 修改序列控制器样式以适应新按钮 */
+                .sequenceController {
+                    grid-column: label 3;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 1rem;
+                    margin: 0.5rem 0;
+                    position: relative;
                 }
             </style>
             <dialog id="inputDialog">
@@ -240,6 +185,7 @@
                            min="0" max="1" value="0">
                 </div>
                 <button id="nextSequence" class="nextButton">Next</button>
+                <button id="exportSVG" class="exportButton">📥 Export</button>
             </div>
             <div class="editDialogBox">
                 <button id="openDialog" class="openDialog" title="Edit Diagram">🛠️</button>
